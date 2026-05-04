@@ -146,6 +146,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--gbg);color:var(--txt
 .ai-copy-btn{position:absolute;top:6px;right:6px;padding:3px 10px;font-size:11px;font-family:'Noto Sans KR',sans-serif;font-weight:600;background:var(--navy);color:#fff;border:none;border-radius:4px;cursor:pointer;opacity:.75;transition:.15s;z-index:1;}
 .ai-copy-btn:hover{opacity:1;}
 .ai-copy-btn.copied{background:var(--teall);}
+.tab-rec-bar{background:var(--white);border:1.5px solid var(--bluel);border-radius:9px;padding:12px 16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(27,95,187,.08);}
 .na-section{background:var(--white);border:1px solid var(--gbor);border-radius:9px;margin-bottom:8px;overflow:hidden;}
 .na-sec-hd{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;font-size:13px;font-weight:700;color:var(--navy);background:var(--gbg);cursor:pointer;user-select:none;transition:.15s;}
 .na-sec-hd:hover{background:#ECF2FF;}
@@ -1298,6 +1299,17 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--gbg);color:var(--txt
 ════════════════════════════════════════════════ -->
 <div id="t5" class="panel">
 
+  <!-- 수급자 선택 바 -->
+  <div class="tab-rec-bar" id="t5RecBar">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="font-size:12px;font-weight:700;color:var(--navy2);white-space:nowrap;">👤 수급자 선택</span>
+      <select id="t5RecSel" onchange="onTabRecSelect("t5", this.value)" style="padding:6px 10px;border:1px solid var(--gbor);border-radius:6px;font-size:13px;font-family:'Noto Sans KR',sans-serif;outline:none;min-width:160px;background:#fff;">
+        <option value="">— 수급자를 선택하세요 —</option>
+      </select>
+      <div id="t5RecInfo" style="font-size:12px;color:var(--gtxt);"></div>
+      <button class="btn btn-g btn-sm" onclick="openRecModal()" style="margin-left:auto;">+ 수급자 관리</button>
+    </div>
+  </div>
   <!-- 서브탭 -->
   <div style="display:flex;gap:0;background:var(--white);border:1px solid var(--gbor);border-radius:9px;overflow:hidden;margin-bottom:16px;">
     <button class="risk-subtab on" id="rst_fall" onclick="riskSubTab('fall')"
@@ -1458,6 +1470,17 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--gbg);color:var(--txt
 
 <!-- ═══ TAB 6: 욕구조사기록지 ═══ -->
 <div id="t6" class="panel">
+  <!-- 수급자 선택 바 -->
+  <div class="tab-rec-bar" id="t6RecBar">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="font-size:12px;font-weight:700;color:var(--navy2);white-space:nowrap;">👤 수급자 선택</span>
+      <select id="t6RecSel" onchange="onTabRecSelect("t6", this.value)" style="padding:6px 10px;border:1px solid var(--gbor);border-radius:6px;font-size:13px;font-family:'Noto Sans KR',sans-serif;outline:none;min-width:160px;background:#fff;">
+        <option value="">— 수급자를 선택하세요 —</option>
+      </select>
+      <div id="t6RecInfo" style="font-size:12px;color:var(--gtxt);"></div>
+      <button class="btn btn-g btn-sm" onclick="openRecModal()" style="margin-left:auto;">+ 수급자 관리</button>
+    </div>
+  </div>
 <div class="card" style="margin-bottom:10px;">
   <div class="card-hd">
     <div class="card-ico ico-b">📋</div>
@@ -1646,6 +1669,17 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--gbg);color:var(--txt
 
 <!-- ═══ TAB 7: 급여제공계획서 ═══ -->
 <div id="t7" class="panel">
+  <!-- 수급자 선택 바 -->
+  <div class="tab-rec-bar" id="t7RecBar">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="font-size:12px;font-weight:700;color:var(--navy2);white-space:nowrap;">👤 수급자 선택</span>
+      <select id="t7RecSel" onchange="onTabRecSelect("t7", this.value)" style="padding:6px 10px;border:1px solid var(--gbor);border-radius:6px;font-size:13px;font-family:'Noto Sans KR',sans-serif;outline:none;min-width:160px;background:#fff;">
+        <option value="">— 수급자를 선택하세요 —</option>
+      </select>
+      <div id="t7RecInfo" style="font-size:12px;color:var(--gtxt);"></div>
+      <button class="btn btn-g btn-sm" onclick="openRecModal()" style="margin-left:auto;">+ 수급자 관리</button>
+    </div>
+  </div>
 <div class="card" style="margin-bottom:10px;">
   <div class="card-hd">
     <div class="card-ico ico-t">📄</div>
@@ -2068,6 +2102,12 @@ function refreshRecSel(){
 // 수급자 선택시: 기본정보(성명~등급)만 채우고 나머지는 공백
 function onRecipientSelect(id){
   if(!currentUser){ alert('로그인 후 이용 가능합니다.'); return; }
+  // 탭별 수급자 셀렉트도 동기화
+  TAB_REC_SELS.forEach(sid=>{
+    const s = document.getElementById(sid);
+    if(s) s.value = id||'';
+  });
+  _updateTabRecInfo(id);
   clearAllFormFields();
   if(!id)return;
   const rec=DB.recs().find(r=>r.id===id);
@@ -5356,6 +5396,8 @@ function _applyLoggedInState(){
   if(orgBar) orgBar.style.display = '';
   // 수급자 셀렉트 복원
   refreshRecSel();
+  // 탭별 수급자 바도 갱신
+  setTimeout(refreshTabRecSels, 100);
   // 헤더 수급자/월 컨트롤 활성화
   _setHeaderControls(true);
 }
@@ -6586,11 +6628,85 @@ function loadPressureRecord(idx){
 function printFallRisk(){ window.print(); }
 function printPressureRisk(){ window.print(); }
 
-// ── 탭 전환 (단일 함수 — 재선언 없음) ──
+// ── 탭별 수급자 선택 바 렌더링 및 동기화 ──
+const TAB_REC_SELS = ['t5RecSel','t6RecSel','t7RecSel'];
+
+function refreshTabRecSels(){
+  // 로그인 전이면 초기화
+  if(!currentUser){
+    TAB_REC_SELS.forEach(sid=>{
+      const s = document.getElementById(sid);
+      if(s){ s.innerHTML='<option value="">— 로그인 필요 —</option>'; s.disabled=true; }
+    });
+    return;
+  }
+  const recs = DB.recs().filter(r=>r.recStatus!=='archived');
+  const curId = getVal('hdrRec');
+  TAB_REC_SELS.forEach(sid=>{
+    const s = document.getElementById(sid);
+    if(!s) return;
+    s.disabled = false;
+    s.innerHTML = '<option value="">— 수급자를 선택하세요 —</option>' +
+      recs.map(r=>`<option value="${r.id}">${r.name} (${r.grade||'등급미상'})</option>`).join('');
+    if(curId) s.value = curId;
+  });
+  _updateTabRecInfo(curId);
+}
+
+function _updateTabRecInfo(recId){
+  const rec = recId ? DB.recs().find(r=>r.id===recId) : null;
+  const infoHtml = rec
+    ? `<span style="color:var(--blue);font-weight:700;">${rec.name}</span>
+       <span style="color:var(--gtxt);">${rec.grade||''} · ${rec.birth||''} · ${rec.ltcNo||''}</span>`
+    : '<span style="color:var(--red);font-size:11px;">⚠ 수급자를 선택하면 해당 수급자의 데이터로 저장됩니다</span>';
+  ['t5RecInfo','t6RecInfo','t7RecInfo'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.innerHTML = infoHtml;
+  });
+}
+
+function onTabRecSelect(tab, recId){
+  // 헤더 셀렉트와 동기화
+  const hdrSel = document.getElementById('hdrRec');
+  if(hdrSel){ hdrSel.value = recId; }
+  // 다른 탭 셀렉트도 동기화
+  TAB_REC_SELS.forEach(sid=>{
+    const s = document.getElementById(sid);
+    if(s) s.value = recId;
+  });
+  _updateTabRecInfo(recId);
+  // 탭별 데이터 로드
+  if(recId){
+    if(tab==='t5'){
+      // 위험도: 날짜 기본값 설정
+      const today = new Date().toISOString().slice(0,10);
+      if(!getVal('fall_date')) setVal('fall_date', today);
+      if(!getVal('pressure_date')) setVal('pressure_date', today);
+    }
+    if(tab==='t6') syncNaFromRecipient();
+    if(tab==='t7') syncCpFromRecipient();
+  }
+}
+
+// refreshRecSel 원본 후킹 — 탭 셀렉트도 함께 갱신
+const _origRefreshRecSel = refreshRecSel;
+refreshRecSel = function(){
+  _origRefreshRecSel();
+  refreshTabRecSels();
+};
+
+// ── 탭 전환 시 수급자 바 동기화 ── ──
 // 원본 mainTab을 _mainTabCore로 백업 후 교체
 var _mainTabCore = mainTab;
 mainTab = function(id, btn){
   _mainTabCore(id, btn);
+  // 탭 진입 시 수급자 바 현재 선택값 동기화
+  const curId = getVal('hdrRec');
+  TAB_REC_SELS.forEach(sid=>{
+    const s = document.getElementById(sid);
+    if(s && curId) s.value = curId;
+  });
+  _updateTabRecInfo(curId);
   if(id==='t5'){
     if(!document.getElementById('fallTableBody')?.children.length) renderFallTable();
     if(!document.getElementById('pressureTableBody')?.children.length) renderPressureTable();
