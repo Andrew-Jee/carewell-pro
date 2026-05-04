@@ -286,6 +286,25 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--gbg);color:var(--txt
   .hdr,.main-tabs,.step-nav,.btn-row,.no-print,#orgBarArea{display:none!important;}
   .wrap{padding:0;max-width:100%;}
   .print-form{border:none!important;}
+  /* 브라우저 기본 머리글/바닥글 제거 */
+  @page{
+    size:A4;
+    margin:15mm 12mm;
+    /* 머리글/바닥글 완전 제거 */
+    margin-top:15mm;
+  }
+  /* 인쇄 시 최상단 CareWell Pro 헤더 표시 */
+  body::before{
+    content:'CareWell Pro - AI가 지원하는 사회복지사 업무 자동화 프로그램';
+    display:block;
+    font-size:10px;
+    color:#666;
+    text-align:center;
+    padding-bottom:8px;
+    border-bottom:1px solid #ccc;
+    margin-bottom:12px;
+    font-family:'Noto Sans KR',sans-serif;
+  }
 }
 </style>
 </head>
@@ -6349,19 +6368,26 @@ async function genFallAI(){
   const el = document.getElementById('fall_basis');
   el.value='AI 서술 생성 중...';
   const itemSummary = Object.values(data.items).map(i=>`${i.itemLabel}: ${i.label}(${i.score}점)`).join('\n');
-  const prompt = `장기요양 낙상 위험도 평가 결과 요약 서술을 작성해 주세요.
+  const prompt = `장기요양 낙상 위험도 평가 결과에 대한 전문적인 판단근거 서술을 작성해 주세요.
 
-수급자: ${rec?.name||'(미선택)'}
+[기본 정보]
+수급자: ${rec?.name||'(미선택)'}  등급: ${rec?.grade||'미상'}  주요질환: ${rec?.dx||'미기재'}
 평가일: ${data.date||'미기재'}
-총 점수: ${data.total}점 / 70점
-위험도 판정: ${data.level}
+총 점수: ${data.total}점 / 70점  위험도 판정: ${data.level}
 
-항목별 평가:
+[항목별 평가 결과]
 ${itemSummary}
 
-위 평가 결과를 바탕으로 전문 사회복지사(요양보호사) 관점에서 3~5문장으로 판단근거를 서술해 주세요.
-위험 요인, 주의사항, 권고 조치(환경 개선, 보조기구 제공, 낙상 예방 프로그램 등)를 구체적으로 포함하세요.
-공식 업무 기록 형식으로 작성하세요.`;
+위 평가 결과를 바탕으로 아래 구성에 따라 총 6~8문장의 전문적 판단근거를 작성하세요.
+
+1) 위험도 총평: 총점과 판정 등급을 근거로 현재 낙상 위험 수준 서술
+2) 주요 위험 요인 분석: 고점수 항목 2~3개를 구체적으로 명시하며 위험성 설명
+3) 낙상 시 예상 결과: 해당 수급자의 건강 상태를 고려한 낙상 발생 시 위험성
+4) 즉각적 권고 조치: 환경 개선(미끄럼 방지, 조명, 손잡이 설치 등), 보조기구 제공, 보호자 교육 등
+5) 장기 관리 계획: 낙상 예방 프로그램, 정기 재평가 주기, 모니터링 방법
+
+문장 종결어미는 반드시 "~함.", "~임.", "~됨.", "~확인됨.", "~관찰됨.", "~필요함.", "~요함." 형식만 사용할 것.
+"~합니다", "~입니다" 등 경어체 절대 금지. 전문 사회복지사 작성 공식 기록 문체로 작성.`;
   try{
     el.value = await callClaudeWithSystem('', prompt, 1000);
     _autoResizeTa(el);
@@ -6379,19 +6405,26 @@ async function genPressureAI(){
   const el = document.getElementById('pressure_basis');
   el.value='AI 서술 생성 중...';
   const itemSummary = Object.values(data.items).map(i=>`${i.itemLabel}: ${i.label}(${i.score}점)`).join('\n');
-  const prompt = `장기요양 욕창 위험도 평가(Braden Scale) 결과 요약 서술을 작성해 주세요.
+  const prompt = `장기요양 욕창 위험도 평가(Braden Scale) 결과에 대한 전문적인 판단근거 서술을 작성해 주세요.
 
-수급자: ${rec?.name||'(미선택)'}
+[기본 정보]
+수급자: ${rec?.name||'(미선택)'}  등급: ${rec?.grade||'미상'}  주요질환: ${rec?.dx||'미기재'}
 평가일: ${data.date||'미기재'}
-Braden 총 점수: ${data.total}점 / 23점
-위험도 판정: ${data.level}
+Braden 총 점수: ${data.total}점 / 23점  위험도 판정: ${data.level}
 
-항목별 평가:
+[항목별 평가 결과]
 ${itemSummary}
 
-위 평가 결과를 바탕으로 전문 간호사(요양보호사) 관점에서 3~5문장으로 판단근거를 서술해 주세요.
-위험 요인, 피부 상태 관리 방법, 권고 조치(체위 변경, 욕창 예방 매트, 영양 관리 등)를 구체적으로 포함하세요.
-공식 업무 기록 형식으로 작성하세요.`;
+위 평가 결과를 바탕으로 아래 구성에 따라 총 6~8문장의 전문적 판단근거를 작성하세요.
+
+1) 위험도 총평: Braden 점수와 판정 등급 근거로 현재 욕창 발생 위험 수준 서술
+2) 주요 위험 요인 분석: 저점수(위험) 항목 2~3개를 구체적으로 명시하며 위험성 설명 (Braden은 점수 낮을수록 위험)
+3) 피부 상태 및 예상 결과: 현재 피부 상태와 욕창 발생 시 예상되는 단계 및 합병증
+4) 즉각적 권고 조치: 체위 변경 주기(2시간 간격 등), 욕창 예방 매트 적용, 피부 보습 관리, 실금 처리, 영양 보충 등 구체적 조치
+5) 장기 관리 계획: 정기 피부 상태 사정, 재평가 주기, 담당자 교육 및 가족 지도 방법
+
+문장 종결어미는 반드시 "~함.", "~임.", "~됨.", "~확인됨.", "~관찰됨.", "~필요함.", "~요함." 형식만 사용할 것.
+"~합니다", "~입니다" 등 경어체 절대 금지. 전문 간호사/사회복지사 작성 공식 기록 문체로 작성.`;
   try{
     el.value = await callClaudeWithSystem('', prompt, 1000);
     _autoResizeTa(el);
@@ -6750,7 +6783,8 @@ async function genNaAI(sectionId, basisId){
 입력된 내용: ${texts||'없음'}
 
 위 평가 내용을 바탕으로 전문 사회복지사 관점에서 3~5문장의 공식 판단근거를 작성해 주세요.
-현재 상태, 지원 필요 이유, 서비스 방향을 포함하세요.`;
+현재 상태, 지원 필요 이유, 서비스 방향을 포함하세요.
+문장 종결어미는 반드시 "~함.", "~임.", "~됨.", "~확인됨.", "~관찰됨." 형식만 사용할 것. "~합니다", "~입니다" 등 경어체 절대 금지.`;
   try{
     el.value = await callClaudeWithSystem('', prompt, 1000);
     _autoResizeTa(el);
@@ -6777,6 +6811,7 @@ ${bases||'(미작성)'}
 
 위 내용을 바탕으로 5~8문장의 종합의견을 작성해 주세요.
 수급자의 전반적 건강상태, 주요 욕구, 우선 지원 영역, 장기 서비스 방향을 포함하세요.
+문장 종결어미는 반드시 "~함.", "~임.", "~됨.", "~확인됨.", "~관찰됨." 형식만 사용할 것. "~합니다", "~입니다" 등 경어체 절대 금지.
 공식 업무 기록 문체로 작성하세요.`;
   try{
     el.value = await callClaudeWithSystem('', prompt, 1200);
@@ -6897,9 +6932,15 @@ function addCpRow(){
   tr.id = `cpRow_${n}`;
   tr.innerHTML = `
     <td style="text-align:center;font-size:12px;color:var(--gtxt);">${tbody.children.length+1}</td>
-    <td><input class="cp-row-inp" type="text" id="cp_area_${n}" placeholder="영역"></td>
+    <td style="cursor:pointer;" onclick="showAreaPopup(event,'cp_area_${n}')">
+      <div style="font-size:10px;color:var(--blue);margin-bottom:2px;">▼ 선택</div>
+      <input class="cp-row-inp" type="text" id="cp_area_${n}" placeholder="필요영역" style="pointer-events:none;">
+    </td>
     <td><input class="cp-row-inp" type="text" id="cp_goal_${n}" placeholder="세부목표"></td>
-    <td><input class="cp-row-inp" type="text" id="cp_need_${n}" placeholder="필요내용"></td>
+    <td style="cursor:pointer;" onclick="showContentPopup(event,'cp_need_${n}','cp_area_${n}')">
+      <div style="font-size:10px;color:var(--blue);margin-bottom:2px;">▼ 선택</div>
+      <textarea class="cp-row-inp" id="cp_need_${n}" placeholder="필요내용" style="pointer-events:none;min-height:36px;"></textarea>
+    </td>
     <td><textarea class="cp-row-inp" id="cp_detail_${n}" style="min-height:36px;resize:vertical;" placeholder="세부 제공내용"></textarea></td>
     <td><input class="cp-row-inp" type="text" id="cp_count_${n}" placeholder="주 N회"></td>
     <td><input class="cp-row-inp" type="text" id="cp_time_${n}" placeholder="N시간"></td>
@@ -6939,12 +6980,45 @@ async function genCpGoalAI(type){
   el.value='AI 생성 중...';
   const naData = localStorage.getItem(DB.rawKey(`na_${recId}`));
   const naSummary = naData ? JSON.parse(naData).na_summary||'' : '';
-  const prompt = `장기요양 급여제공계획서의 "${typeLabel}" 서비스 목표를 2~3문장으로 작성해 주세요.
+  // 욕구조사에서 희망서비스, 간호관리, 신체기능 데이터 추출
+  let naContext = '';
+  if(naData){
+    try{
+      const nd = JSON.parse(naData);
+      const parts = [];
+      if(nd.na_dx_detail) parts.push('질환: '+nd.na_dx_detail);
+      const gaitMap = {독립보행:'독립보행 가능',보조기구보행:'보조기구 이용 보행',부축보행:'부축 필요',휠체어이동:'휠체어 이동',보행불가:'보행 불가'};
+      if(nd.na_gait) parts.push('보행: '+(gaitMap[nd.na_gait]||nd.na_gait));
+      const mealMap = {일반식:'일반식',다진식:'다진식',유동식:'유동식',경관식:'경관식(튜브 식이)'};
+      if(nd.na_mealType) parts.push('식사: '+(mealMap[nd.na_mealType]||nd.na_mealType));
+      naContext = parts.join(' / ');
+    }catch(e){}
+  }
+  const typeDesc = {
+    vy: '방문요양 — 신체활동지원, 일상생활지원, 정서지원 포함',
+    vb: '방문목욕 — 목욕 서비스 제공, 피부 위생 관리, 감염 예방',
+    vn: '방문간호 — 건강 상태 모니터링, 복약 관리, 상처 처치, 만성질환 관리'
+  }[type]||typeLabel;
+  const prompt = `장기요양 급여제공계획서 "${typeLabel}" 서비스 목표를 작성해 주세요.
 
-수급자: ${rec?.name||'(미선택)'} / 등급: ${rec?.grade||''} / 질환: ${rec?.dx||''}
-욕구조사 종합의견: ${naSummary||'없음'}
+[수급자 정보]
+성명: ${rec?.name||'(미선택)'}  등급: ${rec?.grade||'미상'}
+주요질환: ${rec?.dx||naContext||'미기재'}
+추가 상태: ${naContext||'욕구조사 미완료'}
 
-공식적이고 구체적인 서비스 목표를 작성해 주세요.`;
+[서비스 유형]
+${typeDesc}
+
+[욕구조사 종합의견]
+${naSummary||'(욕구조사 미완료 — 수급자 등급·질환 기반으로 작성)'}
+
+아래 구성으로 3~4문장의 구체적 서비스 목표를 작성하세요.
+① 현재 수급자의 주요 욕구·문제 상황 (1문장)
+② ${typeLabel} 서비스를 통해 달성하고자 하는 구체적 목표 (1~2문장)  
+③ 기대 효과 또는 유지·향상 목표 (1문장)
+
+문장 종결어미는 반드시 "~함.", "~임.", "~됨.", "~도모함.", "~유지함.", "~지원함." 형식만 사용.
+"~합니다", "~입니다" 경어체 절대 금지. 공식 업무 기록 문체.`;
   try{
     el.value = await callClaudeWithSystem('', prompt, 600);
     _autoResizeTa(el);
@@ -6963,6 +7037,7 @@ async function genCpRowsAI(){
 수급자: ${rec?.name||'(미선택)'} / 등급: ${rec?.grade||''} / 질환: ${rec?.dx||''}
 욕구조사 종합의견: ${naSummary||'없음'}
 
+모든 텍스트 필드의 문장 종결어미는 "~함.", "~임.", "~됨." 형식만 사용할 것. "합니다" 절대 금지.
 다음 JSON 배열 형식으로만 응답하세요 (다른 텍스트 없이):
 [
   {"area":"장기요양필요영역","goal":"장기요양세부목표","need":"장기요양필요내용","detail":"세부제공내용","count":"주N회","time":"Nh","writer":"사회복지사"},
@@ -6999,7 +7074,8 @@ async function genCpSummaryAI(){
 수급자: ${rec?.name||'(미선택)'} / 등급: ${rec?.grade||''}
 계획 내용:\n${rowSummary||'없음'}
 
-서비스 제공 방향, 기대 효과, 모니터링 계획을 포함한 공식 종합의견을 작성하세요.`;
+서비스 제공 방향, 기대 효과, 모니터링 계획을 포함한 공식 종합의견을 작성하세요.
+문장 종결어미는 반드시 "~함.", "~임.", "~됨.", "~확인됨.", "~관찰됨." 형식만 사용할 것. "~합니다", "~입니다" 등 경어체 절대 금지.`;
   try{
     el.value = await callClaudeWithSystem('', prompt, 800);
     _autoResizeTa(el);
