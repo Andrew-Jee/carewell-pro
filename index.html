@@ -6072,13 +6072,34 @@ async function renderAdminMembers(el){
 async function changeMemberPlan(userId, plan){
   if(!plan||!sbClient) return;
   if(!confirm(`플랜을 '${plan}'으로 변경하시겠습니까?`)) return;
-  const {error} = await sbClient.from('profiles').update({plan, updated_at: new Date().toISOString()}).eq('id', userId);
-  if(error){ alert('변경 실패: '+error.message); return; }
+
+  // RLS 우회: Edge Function을 통해 서비스 롤로 업데이트
+  try{
+    let jwt = '';
+    try{ const {data} = await sbClient.auth.getSession(); jwt = data?.session?.access_token||''; }catch(e){}
+
+    const res = await fetch('https://qfflcykirgijpupckfvi.supabase.co/functions/v1/admin-update-plan', {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':'Bearer '+jwt,
+        'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmZmxjeWtpcmdpanB1cGNrZnZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3NzA0MTMsImV4cCI6MjA5MzM0NjQxM30.p0d9cugPF0CnnAxlWfcTvC1NO1JXmZGpgr9iLu2t0mA'
+      },
+      body: JSON.stringify({userId, plan})
+    });
+    const result = await res.json();
+    if(!res.ok){ throw new Error(result.error||'변경 실패'); }
+  }catch(edgeErr){
+    // Edge Function 없으면 직접 시도 (RLS가 허용하는 경우)
+    const {error} = await sbClient.from('profiles').update({plan, updated_at: new Date().toISOString()}).eq('id', userId);
+    if(error){ alert('변경 실패: '+error.message+'\n\nSupabase RLS 정책을 확인하거나 admin-update-plan Edge Function을 배포하세요.'); return; }
+  }
+
   // 현재 로그인한 유저 자신의 플랜이 변경된 경우 즉시 반영
   if(currentUser && currentUser.id === userId){
     if(currentProfile) currentProfile.plan = plan;
     updateAuthUI(true);
-    renderPlanBar(); // 수급자 모달 프로그레스바 갱신
+    renderPlanBar();
   }
   alert('✅ 플랜 변경 완료');
   renderAdminMembers(document.getElementById('adminContent'));
