@@ -1876,31 +1876,23 @@ async function callClaudeWithSystem(system, userPrompt, maxTokens=700){
     throw new Error('LOGIN_REQUIRED');
   }
 
-  // Supabase Edge Function 호출 (Andrew의 API 키가 서버에 보관됨)
-  // 유저 JWT를 함께 전송 → 서버에서 인증 확인 후 Anthropic 호출
-  let jwt = '';
-  try{
-    const { data } = await sbClient.auth.getSession();
-    jwt = data?.session?.access_token || '';
-  }catch(e){}
-
-  const EDGE_URL = 'https://qfflcykirgijpupckfvi.supabase.co/functions/v1/claude';
-  const res = await fetch(EDGE_URL, {
+  // Vercel API 프록시 호출 (ANTHROPIC_API_KEY는 서버 환경변수에 보관)
+  const res = await fetch('/api/claude', {
     method:'POST',
     headers:{
-      'Content-Type':'application/json',
-      'Authorization': 'Bearer '+jwt,
-      'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmZmxjeWtpcmdpanB1cGNrZnZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3NzA0MTMsImV4cCI6MjA5MzM0NjQxM30.p0d9cugPF0CnnAxlWfcTvC1NO1JXmZGpgr9iLu2t0mA'
+      'Content-Type':'application/json'
     },
-    body: JSON.stringify({prompt: userPrompt, system, maxTokens})
+    body: JSON.stringify({system, prompt: userPrompt, max_tokens: maxTokens})
   });
 
   if(!res.ok){
     const err = await res.json().catch(()=>({}));
-    throw new Error(err.error || 'Edge Function 오류: HTTP '+res.status);
+    throw new Error(err.error || 'API 오류: HTTP '+res.status);
   }
   const d = await res.json();
-  return _cleanAiText(d.text || '');
+  // Anthropic API 응답 형식: d.content[0].text
+  const text = d.content?.[0]?.text || d.text || '';
+  return _cleanAiText(text);
 }
 
 // API 키 미설정 안내 팝업
