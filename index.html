@@ -1863,6 +1863,11 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--gbg);color:var(--txt
     <div class="btn-row right" style="margin-top:12px;"><button class="btn btn-o btn-sm" onclick="closeModal('histModal')">닫기</button></div>
   </div>
 </div>
+<script src="/kb/law_kb.js"></script>
+<script src="/kb/eval_kb.js"></script>
+<script src="/kb/qa_kb.js"></script>
+<script src="/kb/gosiqa_kb.js"></script>
+<script src="/kb/minsang_kb.js"></script>
 <script>
 // ══ API 호출 — Netlify Function 프록시 ══
 async function callClaude(prompt, maxTokens=700){
@@ -3641,12 +3646,7 @@ function renderIssueSection(title, items, bgColor, borderColor, textColor){
 // 장기요양 AI 법령 상담 챗봇
 // ══════════════════════════════════════════════════
 
-// ── 법령 지식 베이스 (RAG용 내장 데이터) 2026년 최신 기준 ──
-<script src="/kb/law_kb.js"></script>
-<script src="/kb/eval_kb.js"></script>
-<script src="/kb/qa_kb.js"></script>
-<script src="/kb/gosiqa_kb.js"></script>
-<script src="/kb/minsang_kb.js"></script>
+// ── 법령 지식 베이스: 외부 kb/*.js 파일에서 로드 ──
 
 
 
