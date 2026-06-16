@@ -19,7 +19,7 @@ module.exports = async function handler(req, res) {
 
   try {
     const body = {
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: max_tokens || 1000,
       messages: [{ role: 'user', content: prompt }]
     };
