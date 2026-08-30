@@ -3087,10 +3087,12 @@ async function aiAutoFillJournal(){
       });
       const apiData = await apiRes.json();
       const rawText = apiData.text || apiData.content?.[0]?.text || '';
-      const cleaned = rawText.replace(/```json[\s\S]*?```|```[\s\S]*?```/g, m => m.replace(/```json|```/g,'')).trim();
-      // JSON 블록 추출
-      const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-      data = JSON.parse(jsonMatch ? jsonMatch[0] : cleaned);
+      // 백틱 코드블록 제거 후 JSON 추출
+      const stripped = rawText.replace(/`{3}json/g,'').replace(/`{3}/g,'').trim();
+      const jsonStart = stripped.indexOf('{');
+      const jsonEnd = stripped.lastIndexOf('}');
+      const jsonStr = stripped.slice(jsonStart, jsonEnd+1);
+      data = JSON.parse(jsonStr);
     } catch(e) {
       console.error('AI 파싱 오류:', e);
       alert('AI 응답 파싱 오류. 다시 시도해주세요.
