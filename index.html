@@ -3095,8 +3095,7 @@ async function aiAutoFillJournal(){
       data = JSON.parse(jsonStr);
     } catch(e) {
       console.error('AI 파싱 오류:', e);
-      alert('AI 응답 파싱 오류. 다시 시도해주세요.
-(오류: '+e.message+')');
+      alert('AI 응답 파싱 오류. 다시 시도해주세요. (오류: '+e.message+')');
       document.getElementById('autoFillProgress').style.display = 'none';
       return;
     }
