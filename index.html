@@ -3077,13 +3077,24 @@ async function aiAutoFillJournal(){
 위 메모를 바탕으로 업무수행일지 각 항목을 전문적으로 작성해주세요.`;
 
   try {
-    const res = await callClaudeWithSystem(systemPrompt, userPrompt, 1000);
+    // JSON 파싱을 위해 _cleanAiText 우회 — /api/claude 직접 호출
     let data;
     try {
-      const cleaned = res.replace(/```json|```/g,'').trim();
-      data = JSON.parse(cleaned);
+      const apiRes = await fetch('/api/claude', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({system: systemPrompt, prompt: userPrompt, max_tokens: 1200})
+      });
+      const apiData = await apiRes.json();
+      const rawText = apiData.text || apiData.content?.[0]?.text || '';
+      const cleaned = rawText.replace(/```json[\s\S]*?```|```[\s\S]*?```/g, m => m.replace(/```json|```/g,'')).trim();
+      // JSON 블록 추출
+      const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+      data = JSON.parse(jsonMatch ? jsonMatch[0] : cleaned);
     } catch(e) {
-      alert('AI 응답 파싱 오류. 다시 시도해주세요.');
+      console.error('AI 파싱 오류:', e);
+      alert('AI 응답 파싱 오류. 다시 시도해주세요.
+(오류: '+e.message+')');
       document.getElementById('autoFillProgress').style.display = 'none';
       return;
     }
