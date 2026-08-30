@@ -458,6 +458,24 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--gbg);color:var(--txt
   <div class="spin-wrap" id="spin1" style="display:none;">
     <div class="spin"></div>
     <div style="font-size:13px;color:var(--gtxt);">환수·미지급·감점 사유 분석 중...</div>
+    <!-- ── 위험 대시보드 (결과 나오면 표시) ── -->
+    <div id="riskDashboard" style="display:none;margin-top:16px;">
+      <div class="risk-dashboard" id="riskCards"></div>
+      <div class="risk-gauge" id="riskGaugeArea">
+        <div class="risk-gauge-title">
+          <span>🛡️ 환수 위험도 게이지</span>
+          <span id="riskPct" style="font-size:13px;font-weight:700;"></span>
+        </div>
+        <div class="risk-gauge-bar"><div class="risk-gauge-fill" id="riskGaugeFill" style="width:0%"></div></div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--gtxt);margin-top:4px;">
+          <span>안전</span><span>주의</span><span>위험</span>
+        </div>
+      </div>
+      <div id="riskSummaryArea" style="background:var(--white);border-radius:10px;padding:12px 16px;border:1px solid var(--gbor);margin-bottom:14px;">
+        <div style="font-size:12px;font-weight:700;color:var(--txt2);margin-bottom:8px;">📋 위험 항목 요약</div>
+        <div id="riskSummaryList"></div>
+      </div>
+    </div>
   </div>
   <div id="claimRes" style="display:none;"></div>
 </div>
@@ -590,19 +608,46 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--gbg);color:var(--txt
 
 
 <div id="t2" class="panel">
-  <div class="step-nav">
-    <button class="step-btn on" id="s1b" onclick="goStep(1)"><span class="snum">STEP 1</span>기본정보</button>
-    <button class="step-btn" id="s2b" onclick="goStep(2)"><span class="snum">STEP 2</span>욕구조사</button>
-    <button class="step-btn" id="s3b" onclick="goStep(3)"><span class="snum">STEP 3</span>심신상태·환경변화</button>
-    <button class="step-btn" id="s4b" onclick="goStep(4)"><span class="snum">STEP 4</span>급여제공 계획·확인</button>
-    <button class="step-btn" id="s5b" onclick="goStep(5)"><span class="snum">STEP 5</span>인지활동형</button>
-    <button class="step-btn" id="s6b" onclick="goStep(6)"><span class="snum">STEP 6</span>수급자·보호자 상담</button>
-    <button class="step-btn" id="s7b" onclick="goStep(7)"><span class="snum">STEP 7</span>향후계획·기타</button>
-    <button class="step-btn" id="s8b" onclick="goStep(8)"><span class="snum">STEP 8</span>일지 생성</button>
+  <!-- ── AI 현황 요약 입력 → 자동완성 ── -->
+  <div class="card" style="border:2px solid var(--blue);background:linear-gradient(135deg,#EFF6FF,#F0FDF4);">
+    <div class="card-hd">
+      <div class="card-ico ico-b">🤖</div>
+      <div>
+        <div class="card-ttl" style="color:var(--blue);">AI 자동완성 — 방문 현황 요약 입력</div>
+        <div class="card-sub">방문 후 수급자 상태를 간단히 입력하면 아래 전체 항목을 AI가 자동 채워드립니다</div>
+      </div>
+    </div>
+    <div class="ibox ib-b" style="font-size:13px;line-height:1.8;">
+      💡 <strong>예시:</strong> "오늘 방문했는데 어르신이 허리 통증 호소, 식사는 잘 하심. 화장실은 부축 필요. 보호자 전화로 상담. 다음달 재평가 예정"
+    </div>
+    <textarea id="ai_summary_input" rows="3" 
+      style="width:100%;padding:10px;border:1.5px solid var(--blue);border-radius:8px;font-size:13px;font-family:'Noto Sans KR',sans-serif;line-height:1.7;resize:vertical;outline:none;background:#fff;"
+      placeholder="방문 후 느낀 점, 수급자 상태 변화, 특이사항을 자유롭게 입력하세요..."></textarea>
+    <div class="btn-row" style="margin-top:10px;gap:8px;">
+      <button class="btn btn-p" onclick="aiAutoFillJournal()" style="flex:1;padding:11px;">
+        ✨ 전체 항목 AI 자동완성
+      </button>
+      <button class="btn btn-o btn-sm" onclick="clearJournalForm()">🗑️ 초기화</button>
+    </div>
+    <div id="autoFillProgress" style="display:none;margin-top:8px;text-align:center;color:var(--blue);font-size:12px;">
+      <div class="spin" style="display:inline-block;margin-right:6px;"></div>AI가 항목을 채우는 중...
+    </div>
+  </div>
+
+  <!-- 스텝 목차 (원페이지에서 앵커 역할) -->
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+    <a href="#sec_basic" class="btn btn-o btn-sm" style="text-decoration:none;">👤 기본정보</a>
+    <a href="#sec_needs" class="btn btn-o btn-sm" style="text-decoration:none;">🔍 욕구조사</a>
+    <a href="#sec_status" class="btn btn-o btn-sm" style="text-decoration:none;">🏥 심신상태</a>
+    <a href="#sec_plan" class="btn btn-o btn-sm" style="text-decoration:none;">📋 급여계획</a>
+    <a href="#sec_cog" class="btn btn-o btn-sm" style="text-decoration:none;">🧩 인지활동</a>
+    <a href="#sec_consult" class="btn btn-o btn-sm" style="text-decoration:none;">💬 상담</a>
+    <a href="#sec_future" class="btn btn-o btn-sm" style="text-decoration:none;">📅 향후계획</a>
+    <button class="btn btn-a btn-sm" onclick="generateJournal()">✨ 일지 생성</button>
   </div>
 
   <!-- ════ STEP 1: 기본정보 ════ -->
-  <div id="step1" class="step-panel">
+  <div id="step1" class="step-panel"><a id="sec_basic"></a>
     <div class="card">
       <div class="card-hd"><div class="card-ico ico-b">👤</div><div><div class="card-ttl">기본정보 [별지 제24호서식]</div><div class="card-sub">수급자 DB에서 불러오거나 새로 입력 후 저장하세요</div></div></div>
       <div class="ibox ib-b">💾 상단 <strong>수급자 선택</strong> 시 수급자 성명~장기요양등급은 DB에서 자동 입력됩니다. 담당자·방문정보 등 하단 항목은 공백으로 표시되며, <strong>📂 데이터 불러오기</strong>로 특정 월 데이터를 불러올 수 있습니다.</div>
@@ -660,13 +705,13 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--gbg);color:var(--txt
 
       <div class="btn-row between" style="margin-top:14px;">
         <button class="btn btn-o" onclick="saveRecipientDB()">💾 수급자 DB 저장</button>
-        <button class="btn btn-p" onclick="goStep(2)">다음 단계 →</button>
+        
       </div>
     </div>
   </div>
 
   <!-- ════ STEP 2: 욕구조사 ════ -->
-  <div id="step2" class="step-panel" style="display:none;">
+  <div id="step2" class="step-panel"><a id="sec_needs"></a>
     <div class="card">
       <div class="card-hd"><div class="card-ico ico-b">🔍</div><div><div class="card-ttl">욕구조사 [별지 제24호서식 2항]</div><div class="card-sub">수급자의 욕구 및 현재 상태를 체크합니다</div></div></div>
 
@@ -831,14 +876,14 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--gbg);color:var(--txt
       </div>
 
       <div class="btn-row between">
-        <button class="btn btn-o" onclick="goStep(1)">← 이전</button>
-        <button class="btn btn-p" onclick="goStep(3)">다음 단계 →</button>
+        
+        
       </div>
     </div>
   </div>
 
 
-  <div id="step3" class="step-panel" style="display:none;">
+  <div id="step3" class="step-panel"><a id="sec_status"></a>
     <div class="card">
       <div class="card-hd"><div class="card-ico ico-t">🏥</div><div><div class="card-ttl">수급자의 심신상태 및 환경변화 [별지 제24호서식 3항]</div><div class="card-sub">항목 선택 → 키워드 입력 → [예시 생성] → 클릭 선택</div></div></div>
       <div class="ibox ib-a">⭐ 키워드를 간단히 입력하고 <strong>[예시 생성]</strong>을 클릭하면 전문가 표현으로 3개 예시가 나타납니다. 원하는 예시를 클릭하면 자동 입력됩니다.</div>
@@ -858,14 +903,14 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--gbg);color:var(--txt
         <textarea id="f_synthesis" rows="4" style="width:100%;padding:9px;border:1px solid var(--gbor);border-radius:7px;font-size:13px;font-family:'Noto Sans KR',sans-serif;line-height:1.7;resize:vertical;outline:none;" placeholder="가~바 내용을 입력 후 자동 생성하거나 직접 작성하세요."></textarea>
       </div>
       <div class="btn-row between">
-        <button class="btn btn-o" onclick="goStep(2)">← 이전</button>
-        <button class="btn btn-p" onclick="goStep(4)">다음 단계 →</button>
+        
+        
       </div>
     </div>
   </div>
 
   <!-- ════ STEP 4: 급여제공 계획·확인 ════ -->
-  <div id="step4" class="step-panel" style="display:none;">
+  <div id="step4" class="step-panel"><a id="sec_plan"></a>
     <div class="card">
       <div class="card-hd"><div class="card-ico ico-b">📋</div><div><div class="card-ttl">급여제공 계획 및 제공내용 확인 [별지 제24호서식 4항]</div><div class="card-sub">이미지 양식과 동일한 구조로 작성합니다</div></div></div>
       <div class="ibox ib-b" style="margin-bottom:10px;">📌 <strong>필요영역</strong>·<strong>필요내용</strong>·<strong>제공 확인내용</strong>의 셀을 클릭하면 예시 목록이 나타납니다.</div>
@@ -921,14 +966,14 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--gbg);color:var(--txt
       <textarea id="f_eduContent" rows="4" style="width:100%;padding:9px;border:1px solid var(--gbor);border-radius:7px;font-size:13px;font-family:'Noto Sans KR',sans-serif;resize:vertical;outline:none;" placeholder="선택한 지도 항목 기반으로 AI가 전문적인 내용을 생성합니다."></textarea>
 
       <div class="btn-row between">
-        <button class="btn btn-o" onclick="goStep(3)">← 이전</button>
-        <button class="btn btn-p" onclick="goStep(5)">다음 단계 →</button>
+        
+        
       </div>
     </div>
   </div>
 
   <!-- ════ STEP 5: 인지활동형 ════ -->
-  <div id="step5" class="step-panel" style="display:none;">
+  <div id="step5" class="step-panel"><a id="sec_cog"></a>
     <div class="card">
       <div class="card-hd"><div class="card-ico ico-t">🧩</div><div><div class="card-ttl">인지활동형 프로그램 제공내용 확인 [별지 제24호서식 5항]</div><div class="card-sub">5등급·인지지원등급 해당자만 작성 (비해당 시 STEP 6으로 이동)</div></div></div>
       <div class="fg" style="margin-bottom:10px;"><label>해당 여부</label>
@@ -979,14 +1024,14 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--gbg);color:var(--txt
         </table>
       </div>
       <div class="btn-row between">
-        <button class="btn btn-o" onclick="goStep(4)">← 이전</button>
-        <button class="btn btn-p" onclick="goStep(6)">다음 단계 →</button>
+        
+        
       </div>
     </div>
   </div>
 
   <!-- ════ STEP 6: 수급자·보호자 상담 ════ -->
-  <div id="step6" class="step-panel" style="display:none;">
+  <div id="step6" class="step-panel"><a id="sec_consult"></a>
     <div class="card">
       <div class="card-hd"><div class="card-ico ico-b">💬</div><div><div class="card-ttl">수급자(보호자) 상담 [별지 제24호서식 6항]</div></div></div>
       <div class="g3">
@@ -1022,14 +1067,14 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--gbg);color:var(--txt
         <div class="fg"><label>연계 내용</label><input type="text" id="f_medRefC" placeholder="예: 내과 진료 권유"></div>
       </div>
       <div class="btn-row between">
-        <button class="btn btn-o" onclick="goStep(5)">← 이전</button>
-        <button class="btn btn-p" onclick="goStep(7)">다음 단계 →</button>
+        
+        
       </div>
     </div>
   </div>
 
   <!-- ════ STEP 7: 향후계획·기타사항 ════ -->
-  <div id="step7" class="step-panel" style="display:none;">
+  <div id="step7" class="step-panel"><a id="sec_future"></a>
     <div class="card">
       <div class="card-hd"><div class="card-ico ico-a">📅</div><div><div class="card-ttl">향후 계획 및 기타사항 [별지 제24호서식 7항]</div><div class="card-sub">이미지 양식과 동일한 구조</div></div></div>
 
@@ -1083,14 +1128,14 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--gbg);color:var(--txt
       </div>
 
       <div class="btn-row between">
-        <button class="btn btn-o" onclick="goStep(6)">← 이전</button>
+        
         <button class="btn btn-a" onclick="generateJournal()">✨ 일지 최종 생성 →</button>
       </div>
     </div>
   </div>
 
   <!-- ════ STEP 8: 일지 생성 ════ -->
-  <div id="step8" class="step-panel" style="display:none;">
+  <div id="step8" class="step-panel"><a id="sec_result"></a>
     <div class="spin-wrap" id="spin2" style="display:none;"><div class="spin"></div><div style="font-size:13px;color:var(--gtxt);">공단 평가 만점 기준 일지 생성 중...</div></div>
     <div id="journalOut" style="display:none;">
       <div class="card no-print">
@@ -2097,14 +2142,10 @@ function mainTab(id,btn){
   document.getElementById(id).classList.add('on');btn.classList.add('on');
 }
 function goStep(n){
-  document.querySelectorAll('.step-panel').forEach(p=>p.style.display='none');
-  document.getElementById('step'+n).style.display='block';
-  for(let i=1;i<=8;i++){
-    const b=document.getElementById('s'+i+'b');
-    if(!b)continue;
-    b.className='step-btn'+(i<n?' done':i===n?' on':'');
-  }
-  window.scrollTo({top:0,behavior:'smooth'});
+  // 원페이지 모드: 해당 섹션으로 스크롤
+  const map = {1:'sec_basic',2:'sec_needs',3:'sec_status',4:'sec_plan',5:'sec_cog',6:'sec_consult',7:'sec_future',8:'sec_result'};
+  const anchor = map[n];
+  if(anchor) document.getElementById(anchor)?.scrollIntoView({behavior:'smooth', block:'start'});
 }
 
 // ── RECIPIENT DB ──
@@ -2992,6 +3033,159 @@ async function genFinalOpinion(){
 }
 
 // ── STEP 8: 일지 생성 ──
+
+// ══ 업무수행일지 AI 자동완성 ══
+async function aiAutoFillJournal(){
+  const summary = document.getElementById('ai_summary_input').value.trim();
+  if(!summary){ alert('방문 현황 요약을 먼저 입력해주세요.'); return; }
+
+  document.getElementById('autoFillProgress').style.display = 'block';
+
+  const name = document.getElementById('f_name').value || '수급자';
+  const grade = document.getElementById('f_grade').value || '';
+  const visitDate = document.getElementById('f_visitDate').value || '';
+
+  const systemPrompt = `당신은 장기요양기관 사회복지사의 업무수행일지 작성을 도와주는 AI입니다.
+사회복지사가 방문 후 메모한 내용을 바탕으로 공단 평가 기준에 맞는 전문적인 일지 내용을 JSON으로 생성합니다.
+
+작성 규칙:
+- 문장 종결어미: ~함. ~임. ~됨. ~보임. ~관찰됨. ~확인됨. 형식만 사용
+- 경어체("~습니다") 절대 금지
+- 객관적 기술, 처방성 표현 금지
+- 수급자명 대신 "어르신"으로 표기
+
+반드시 아래 JSON 형식으로만 응답하세요 (다른 텍스트 없이):
+{
+  "nutrition": "양호|불량",
+  "nutrition_detail": "불량인 경우 세부 내용",
+  "walk": "자립보행|부축보행|보행불가|보장구자립|보장구부축",
+  "urine": "양호|요실금|통증|지연|요의없음",
+  "bowel": "양호|변실금|잦은설사|변비|변의없음",
+  "cognition": ["기억단기","기억장기","시간","장소","판단"],
+  "behavior": "없음|있음",
+  "behavior_detail": "있는 경우 세부 내용",
+  "status_summary": "심신상태 및 환경변화 종합 서술 (200자 내외)",
+  "consult_content": "수급자/보호자 상담 내용 서술 (150자 내외)",
+  "future_plan": "향후 계획 및 유의사항 서술 (150자 내외)",
+  "final_opinion": "사회복지사 종합 소견 (200자 내외)"
+}`;
+
+  const userPrompt = `수급자: ${name} (${grade})
+방문일: ${visitDate}
+사회복지사 방문 메모: ${summary}
+
+위 메모를 바탕으로 업무수행일지 각 항목을 전문적으로 작성해주세요.`;
+
+  try {
+    const res = await callClaudeWithSystem(systemPrompt, userPrompt, 1000);
+    let data;
+    try {
+      const cleaned = res.replace(/```json|```/g,'').trim();
+      data = JSON.parse(cleaned);
+    } catch(e) {
+      alert('AI 응답 파싱 오류. 다시 시도해주세요.');
+      document.getElementById('autoFillProgress').style.display = 'none';
+      return;
+    }
+
+    // 영양상태 적용
+    if(data.nutrition){
+      const radios = document.querySelectorAll('input[name="nutrition"]');
+      radios.forEach(r=>{ if(r.value===data.nutrition) r.click(); });
+    }
+
+    // 보행상태 적용
+    if(data.walk){
+      const radios = document.querySelectorAll('input[name="walk"]');
+      radios.forEach(r=>{ if(r.value===data.walk) r.checked=true; });
+    }
+
+    // 배뇨기능
+    if(data.urine){
+      const radios = document.querySelectorAll('input[name="urine"]');
+      radios.forEach(r=>{ if(r.value===data.urine) r.checked=true; });
+    }
+
+    // 배변기능
+    if(data.bowel){
+      const radios = document.querySelectorAll('input[name="bowel"]');
+      radios.forEach(r=>{ if(r.value===data.bowel) r.checked=true; });
+    }
+
+    // 인지기능 체크박스
+    if(data.cognition && Array.isArray(data.cognition)){
+      data.cognition.forEach(c=>{
+        const el = document.getElementById('cog_'+c);
+        if(el) el.checked = true;
+      });
+    }
+
+    // 행동증상
+    if(data.behavior){
+      const radios = document.querySelectorAll('input[name="behavior"]');
+      radios.forEach(r=>{ if(r.value===data.behavior) r.click(); });
+      if(data.behavior==='있음' && data.behavior_detail){
+        setTimeout(()=>{ const el=document.getElementById('behaviorEtc'); if(el) el.value=data.behavior_detail; },300);
+      }
+    }
+
+    // 심신상태 종합
+    if(data.status_summary){
+      const el = document.getElementById('f_synthesis');
+      if(el) el.value = data.status_summary;
+    }
+
+    // 상담 내용
+    if(data.consult_content){
+      const el = document.getElementById('f_consContent');
+      if(el) el.value = data.consult_content;
+    }
+
+    // 향후 계획
+    if(data.future_plan){
+      const el = document.getElementById('f_future');
+      if(el) el.value = data.future_plan;
+    }
+
+    // 종합 소견
+    if(data.final_opinion){
+      const el = document.getElementById('f_finalOpinion');
+      if(el) el.value = data.final_opinion;
+    }
+
+    document.getElementById('autoFillProgress').style.display = 'none';
+    
+    // 완료 알림
+    const notice = document.createElement('div');
+    notice.style.cssText = 'position:fixed;top:70px;right:20px;background:#059669;color:#fff;padding:12px 18px;border-radius:8px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.2);';
+    notice.textContent = '✅ AI 자동완성 완료! 내용을 확인하고 필요시 수정하세요.';
+    document.body.appendChild(notice);
+    setTimeout(()=>notice.remove(), 4000);
+
+    // 심신상태 섹션으로 스크롤
+    document.getElementById('sec_status')?.scrollIntoView({behavior:'smooth', block:'start'});
+
+  } catch(err) {
+    document.getElementById('autoFillProgress').style.display = 'none';
+    alert('AI 자동완성 오류: '+err.message);
+  }
+}
+
+// 일지 폼 초기화
+function clearJournalForm(){
+  if(!confirm('모든 입력 내용을 초기화하겠습니까?')) return;
+  document.getElementById('ai_summary_input').value = '';
+  // 텍스트 입력 초기화
+  ['f_name','f_birth','f_ltcNo','f_sw','f_cw','f_visitTime','f_addr','f_phone',
+   'f_synthesis','f_eduContent','f_consContent','f_consTime','f_complaint',
+   'f_future','f_finalOpinion','f_nextPurpose','f_nextFocus'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  // 라디오/체크박스 초기화
+  document.querySelectorAll('#t2 input[type=radio]').forEach(r=>r.checked=false);
+  document.querySelectorAll('#t2 input[type=checkbox]').forEach(c=>c.checked=false);
+}
+
 async function generateJournal(){
   // 플랜 제한 체크
   const limitCheck = await checkPlanLimit('journals_monthly');
@@ -3564,6 +3758,77 @@ function analyzeNewFormat(records, fileList){
     });
   }
 
+  // ── 10. 🔴 월 한도액 초과 체크 ──
+  const LIMIT_2026 = {'1등급':2512900,'2등급':2331200,'3등급':1528200,'4등급':1409700,'5등급':1208900,'5등급(치매특별)':1208900,'인지지원등급':676320};
+  const SVC_PRICE_MAP = {240:70080,210:63530,180:57020,150:50640,120:43430,90:34120,60:25320,30:17450};
+  const getApproxPrice = (min) => {
+    for(const k of [240,210,180,150,120,90,60,30]){ if(min>=k) return SVC_PRICE_MAP[k]||0; }
+    return 0;
+  };
+  const dbRecsAll = DB.recs();
+  Object.entries(stats.byLtcNo).forEach(([ltcNo, d])=>{
+    const matched = dbRecsAll.find(r=> r.ltcNo===ltcNo || r.ltcNo===ltcNo.replace('L','') || ('L'+r.ltcNo)===ltcNo);
+    const grade = matched?.grade || '';
+    if(!grade) return;
+    const limit = LIMIT_2026[grade];
+    if(!limit) return;
+    const svcRecs = mainRecs.filter(r=>r.ltcNo===ltcNo && !r.isBath);
+    const totalAmt = svcRecs.reduce((sum,r)=>sum+getApproxPrice(r.actualMin),0);
+    if(totalAmt > limit){
+      issues.환수대상.push({
+        level:'🔴', type:'월 한도액 초과 (환수)',
+        ltcNo, date:'월합계',
+        recipient: d.recipient || ltcNo,
+        worker: d.worker,
+        detail:`${grade} 월 한도: ${limit.toLocaleString()}원 | 추산 청구액: ${totalAmt.toLocaleString()}원 | 초과액: ${(totalAmt-limit).toLocaleString()}원`,
+        guide:'월 한도액 초과분은 공단 청구 불가. 초과분을 청구에서 제외하거나 수급자 본인부담으로 처리 필요.',
+        law:'고시 제13조'
+      });
+    }
+  });
+
+  // ── 11. 🔴 가족요양 월 20일 초과 / 90분 초과 ──
+  const familyByLtc = {};
+  mainRecs.filter(r=>r.isFamily).forEach(r=>{
+    if(!familyByLtc[r.ltcNo]) familyByLtc[r.ltcNo]={days:new Set(),maxMin:0,name:stats.byLtcNo[r.ltcNo]?.recipient||r.ltcNo};
+    familyByLtc[r.ltcNo].days.add(r.date);
+    familyByLtc[r.ltcNo].maxMin = Math.max(familyByLtc[r.ltcNo].maxMin, r.actualMin);
+  });
+  Object.entries(familyByLtc).forEach(([ltcNo,d])=>{
+    if(d.days.size > 20){
+      issues.환수대상.push({
+        level:'🔴', type:'가족요양 월 20일 초과 (환수)',
+        ltcNo, date:'월합계', recipient:d.name, worker:'가족 요양보호사',
+        detail:`가족요양 제공일수: ${d.days.size}일 (기준: 월 20일 이내)`,
+        guide:'가족인 요양보호사 방문요양은 월 20일을 초과할 수 없습니다. 21일째부터는 급여비용 산정 불가.',
+        law:'고시 제23조 제5항'
+      });
+    }
+    if(d.maxMin > 90){
+      issues.평가감점.push({
+        level:'🟠', type:'가족요양 90분 초과 제공 (확인 필요)',
+        ltcNo, date:'해당 회차', recipient:d.name, worker:'가족 요양보호사',
+        detail:`1회 최대 ${d.maxMin}분 제공 (가족요양 기본 60분, 확대 90분)`,
+        guide:'90분 초과는 확대 요건(65세 이상 배우자, 치매 수급자, 도서벽지) 충족 여부 확인. 미충족 시 환수 위험.',
+        law:'고시 제23조 제6항'
+      });
+    }
+  });
+
+  // ── 12. 🔴 가족요양 가산 오청구 ──
+  mainRecs.filter(r=>r.isFamily).forEach(r=>{
+    if(r.svcName && (r.svcName.includes('야간')||r.svcName.includes('심야')||r.svcName.includes('공휴일')||r.svcName.includes('일요일')||r.svcName.includes('가산'))){
+      issues.환수대상.push({
+        level:'🔴', type:'가족요양 가산 오청구 (환수)',
+        ltcNo:r.ltcNo, date:r.date,
+        recipient:stats.byLtcNo[r.ltcNo]?.recipient||r.ltcNo, worker:r.contractWorker,
+        detail:`가족(${r.familyRel}) 요양보호사 서비스명: "${r.svcName}"`,
+        guide:'가족인 요양보호사에게는 야간·심야·공휴일·중증 등 모든 가산 산정 불가. 가산 제거 후 재청구.',
+        law:'고시 제23조 제4항'
+      });
+    }
+  });
+
   return { issues, stats };
 }
 
@@ -3572,6 +3837,61 @@ function renderClaimResult({issues, stats}){
   const 미지급 = issues.미지급위험.length;
   const 감점 = issues.평가감점.length;
   const 가산 = issues.가산확인.length;
+
+  // ── 위험 대시보드 업데이트 ──
+  const total = stats.total || 1;
+  const riskScore = Math.min(100, Math.round((환수*3 + 미지급*1.5 + 감점*1) / total * 20));
+  const riskPct = Math.min(100, Math.round(환수/total*100));
+
+  document.getElementById('riskDashboard').style.display = 'block';
+
+  // 카드 4개
+  document.getElementById('riskCards').innerHTML = `
+    <div class="risk-card ${환수>0?'red':'green'}" onclick="document.getElementById('sec_환수대상')?.scrollIntoView({behavior:'smooth'})">
+      <div class="risk-card-ico">${환수>0?'🚨':'✅'}</div>
+      <div class="risk-card-num" style="color:${환수>0?'#DC2626':'#059669'}">${환수}</div>
+      <div class="risk-card-lbl">🔴 환수 대상</div>
+      <div class="risk-card-sub">즉시 수정 필요</div>
+    </div>
+    <div class="risk-card ${미지급>0?'orange':'green'}" onclick="document.getElementById('sec_미지급위험')?.scrollIntoView({behavior:'smooth'})">
+      <div class="risk-card-ico">${미지급>0?'⚠️':'✅'}</div>
+      <div class="risk-card-num" style="color:${미지급>0?'#D97706':'#059669'}">${미지급}</div>
+      <div class="risk-card-lbl">🟡 미지급 위험</div>
+      <div class="risk-card-sub">소명자료 준비</div>
+    </div>
+    <div class="risk-card ${감점>0?'orange':'green'}" onclick="document.getElementById('sec_평가감점')?.scrollIntoView({behavior:'smooth'})">
+      <div class="risk-card-ico">${감점>0?'📉':'✅'}</div>
+      <div class="risk-card-num" style="color:${감점>0?'#D97706':'#059669'}">${감점}</div>
+      <div class="risk-card-lbl">🟠 평가 감점</div>
+      <div class="risk-card-sub">평가 시 지적 위험</div>
+    </div>
+    <div class="risk-card ${가산>0?'yellow':'green'}">
+      <div class="risk-card-ico">${가산>0?'💚':'✅'}</div>
+      <div class="risk-card-num" style="color:${가산>0?'#2563EB':'#059669'}">${가산}</div>
+      <div class="risk-card-lbl">💚 가산 확인</div>
+      <div class="risk-card-sub">가산 적용 검토</div>
+    </div>`;
+
+  // 게이지
+  const fillEl = document.getElementById('riskGaugeFill');
+  const pctEl = document.getElementById('riskPct');
+  fillEl.style.width = riskPct + '%';
+  fillEl.className = 'risk-gauge-fill ' + (riskPct===0?'safe':riskPct<20?'warn':'danger');
+  pctEl.textContent = riskPct===0?'✅ 안전':riskPct<20?'⚠️ 주의 ' + riskPct+'%':'🚨 위험 ' + riskPct+'%';
+  pctEl.style.color = riskPct===0?'#059669':riskPct<20?'#D97706':'#DC2626';
+
+  // 요약 리스트
+  const summaryEl = document.getElementById('riskSummaryList');
+  let summaryHtml = '';
+  if(환수===0 && 미지급===0 && 감점===0){
+    summaryHtml = '<div style="color:#059669;font-size:13px;font-weight:600;">✅ 이상 항목이 없습니다. 안전하게 청구할 수 있습니다!</div>';
+  } else {
+    if(환수>0) summaryHtml += `<div class="risk-summary-row"><span class="risk-badge r">🔴 환수</span><span>${환수}건 — 청구 전 반드시 수정하세요</span></div>`;
+    if(미지급>0) summaryHtml += `<div class="risk-summary-row"><span class="risk-badge o">🟡 주의</span><span>${미지급}건 — 소명자료(서명지) 원본 보관 필수</span></div>`;
+    if(감점>0) summaryHtml += `<div class="risk-summary-row"><span class="risk-badge o">🟠 감점</span><span>${감점}건 — 공단 평가 시 지적 가능성</span></div>`;
+    if(가산>0) summaryHtml += `<div class="risk-summary-row"><span class="risk-badge g">💚 가산</span><span>${가산}건 — 가산율 정확 적용 확인</span></div>`;
+  }
+  summaryEl.innerHTML = summaryHtml;
 
   let html = `<div class="card">
     <div class="card-hd"><div class="card-ico ico-b">📊</div><div>
